@@ -1,13 +1,10 @@
 from bs4 import BeautifulSoup
-import numpy as np
 import pandas as pd
 import re
 import os
 
 """
 Created on 6/18/2021
-
-@author: erika
 """
 # structural garbage
 pageA = re.compile('Page Â')
@@ -65,14 +62,14 @@ roman = re.compile(r"\b((?=[MDCLXVI])M*(C[MD]|D?C{0,3})(X[CL]|L?X{0,3})(I[XV]|V?
 spaces = re.compile(r" {2,}")
 
 
-def clean_text():
-    bodies = soup.find_all('div1')
-    text = ''
-    for i in bodies:
-      text += i.get_text()
-      #print(text)
+def clean_text(txt):
+    '''
+    inputs: soup - texts scraped from xml files using beautiful soup
+    output: cleaned_texts - list containing the cleaned text elements in the following order:
+                            1. body text, 2. title, 3. author, 4. publisher
+    '''
 
-    text1 = text.replace("\n", " ")
+    text1 = txt.replace("\n", " ")
     temp = text1
     for trash in structural_garbage:
         temp = trash.sub("", temp)
@@ -109,82 +106,107 @@ def clean_text():
 
     return temp
 
-def find_date():
+
+def find_body(soup):
+    bodies = soup.find_all('div1')
+    body = ''
+    for i in bodies:
+        body += i.get_text()
+
+    body = clean_text(body)
+
+    return body
+
+
+def find_title(soup):
+    titles = soup.find_all('title')
+    title = titles[-1].get_text()
+
+    title = clean_text(title)
+
+    return title
+
+
+def find_author(soup):
+    authors = soup.find_all('author')
+    author = list(set([a.get_text() for a in authors]))
+    if len(author) == 0:
+        author = 'No Author'
+    else:
+        author = [clean_text(a) for a in author]
+
+    return author
+
+
+def find_publisher(soup):
+    publishers = soup.find_all('publisher')
+    publisher = publishers[-1].get_text()
+
+    publisher = clean_text(publisher)
+
+    return publisher
+
+
+def find_date(soup):
     dates = soup.find_all('date')
     datelist = [date.get_text() for date in dates]
-    date1 = min(set([(re.search(r'[1][0-9]{3}', date)).group()
-                  for date
-                  in datelist
-                  if re.search(r'[1][0-9]{3}', date)
-                  is not None]))
+    date1 = set([(re.search(r'[1][0-9]{3}', date)).group()
+                     for date
+                     in datelist
+                     if re.search(r'[1][0-9]{3}', date)
+                     is not None])
 
-    return date1
+    if len(date1) == 0:
+        date1 = 'Date Not Found'
+    else:
+        date1 = min(date1)
+
+    return [date1]
 
 
 # extract information from file
-def parse_xml():
+def parse_xml(soup):
     '''infile = open(file1, "r")
     contents = infile.read()
     soup = BeautifulSoup(contents, 'xml')'''
 
-    titles = soup.find_all('title')
-    title = list(set([t.get_text()
-                      for t 
-                      in titles
-                      if 'Early English books online' not in t.get_text()]))
+    title = find_title(soup)
+    author = find_author(soup)
+    publisher = find_publisher(soup)
+    date = find_date(soup)
+    body = find_body(soup)
 
-    authors = soup.find_all('author')
-    author = list(set([a.get_text() for a in authors]))
-    if len(author) == 0:
-      author.append('No Author')
-
-    publishers = soup.find_all('publisher')
-
-    publisher = [publishers[-1].get_text()]
-
-    date1 = [find_date()]
-    text1 = clean_text()
-
-    return title, author, publisher, date1, text1
+    return title, author, publisher, date, body
 
 
+def make_csv(folder_name, output_folder):
+    """
+    inputs: folder_name - name of the folder from which the texts were extracted
+            output_folder - where to output the csv
+    """
+    cols = ['title', 'author', 'publisher', 'date', 'text']
+    df = pd.DataFrame([], columns=cols)
+    df.to_csv(os.path.join(output_folder, folder_name) + '.csv')
 
-def make_csv(file_name, title, author, publisher, date1, text1, output_folder):
-    rows = {'title': [title], 'author': [author], 'publisher':[publisher], 'date': [date1], 'text': [text1]}
-    df = pd.DataFrame.from_dict(rows)
-    df.to_csv(os.path.join(output_folder, file_name) + '.csv')
-''''
-def make_text(file_name, title, author, publisher, date1, text1, output_folder): 
-  rows = {'title': [title], 
-          'author': [author],
-          'publisher': [publisher], 
-          'date': [date1], 
-          'text': [text1]}
-  df = pd.DataFrame.from_dict(rows)
-  #df.to_csv(output_folder + '/' + file_name + '.csv')
 
-  np.savetxt(output_folder + '/' + file_name + '.txt',
-            df.values, 
-            fmt = '%s', 
-            delimiter = '\n')
-'''
+# def make_text(file_name, title, author, publisher, date1, text1, output_folder):
+#   rows = {'title': [title],
+#           'author': [author],
+#           'publisher': [publisher],
+#           'date': [date1],
+#           'text': [text1]}
+#   df = pd.DataFrame.from_dict(rows)
+#   #df.to_csv(output_folder + '/' + file_name + '.csv')
+#
+#   np.savetxt(output_folder + '/' + file_name + '.txt',
+#             df.values,
+#             fmt = '%s',
+#             delimiter = '\n')
 
 if __name__ == '__main__':
 
-  file_dir = './Test Files A'
-  output_dir = './Testing Output'
-
-  #file = 'A50002.P4.xml'
-  #with open(os.path.join(file_dir, file), 'r') as f:
-    #contents = f.read()
-    #soup = BeautifulSoup(contents, 'html.parser')
-    #t, auth, d, txt = parse_xml()
-    #make_text(file[:-4], t, auth, d, txt, output_dir)
-
-  for file in os.listdir(file_dir):
-    print(file)
-    with open(os.path.join(file_dir, file), 'r') as f:
-      contents = f.read()
-      soup = BeautifulSoup(contents, 'html.parser')
-      t, auth, p, d, csv = parse_xml()
-      make_csv(file[:-4], t, auth, p, d, csv, output_dir)
+    with open(r'C:\Users\abhis\Documents\CollegeDocs\Data+\B2_P4\B2\B21478.P4.xml', 'rb') as f:
+        contents = f.read()
+        Soup = BeautifulSoup(contents, 'html.parser')
+        doc_elements = parse_xml(Soup)
+    print(doc_elements[1])
