@@ -16,46 +16,54 @@ library(tidytext)
 library(readtext)
 library(x13binary)
 library(x12)
+library(quanteda)
 #library(stylo)
 ```
 
+```{r}
+text1 <- read.csv(file = 'A50002.P4.csv')
+# text2 <- read.csv(file = 'A50004.P4.csv')
+# text3 <- read.csv(file = 'A50007.P4.csv')
+
+tidytxt1 <- text1 %>%
+    select(text)%>%
+    unnest_tokens(word, text) %>%
+    anti_join(stop_words) %>%
+    count(word, sort = TRUE)
+```
 
 ```{r}
 raw_data <- read.csv(file = 'A50002.P4.csv')
-raw_data2 <- read.csv(file = 'A50007.P4.csv') 
-raw_data3 <- read.csv(file = 'A50025.P4.csv') 
+raw_data <- rbind(raw_data, read.csv(file = 'A50004.P4.csv'))
+raw_data <- rbind(raw_data, read.csv(file = 'A50007.P4.csv'))
+raw_data <- rbind(raw_data, read.csv(file = 'A50025.P4.csv'))
+```
 
-wordsonly3 <- raw_data3
-wordsonly2 <- raw_data2 
-wordsonly <- raw_data
-all_text <- merge(wordsonly$text, wordsonly2$text)
-all_text <- merge(wordsonly$text, wordsonly3$text)
-all_text$text <- paste0(all_text$x,all_text$y)
-all_text$text <- paste0(all_text$x,all_text$z)
+```{r}
 
-wordsonly <- rbind(wordsonly, wordsonly2)
+wordsonly <- raw_data %>%
+  select(title, text) 
 
 wordsonly <- wordsonly %>%
-  select(text) %>%
-  unnest_tokens(word, text)%>%
+  unnest_tokens(word, text) %>%
   anti_join(stop_words)
-wordsonly %>%
-count(word, sort = TRUE)
+
+# wordsonly %>%
+#   count(word, sort = TRUE)
 
 ```
 
 ```{r}
-#library(quanteda)
+library(quanteda)
 library(stm)
 
-ethics_sparse <- wordsonly %>%
-  count(all_text$text, word, sort = TRUE) %>%
-  cast_sparse(all_text$text, word,n)
+ethics_dfm <- wordsonly %>%
+  count(title, word, sort = TRUE) %>%
+  cast_dfm(title, word,n)
 
-
-
-topic_model <- stm(ethics_sparse, K=3,verbose=FALSE, init.type = "Spectral")
+topic_model <- stm(ethics_dfm, K=5,verbose=FALSE, init.type = "Spectral")
 ```
+
 ```{r}
 library(reshape2)
 td_beta <- tidy(topic_model)
