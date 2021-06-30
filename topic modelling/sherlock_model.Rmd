@@ -1,0 +1,39 @@
+---
+title: "sherlock_model"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(gutenbergr)
+```
+
+```{r}
+sherlock_raw <- gutenberg_download(1661)
+
+sherlock <- sherlock_raw %>%
+    mutate(story = ifelse(str_detect(text, "ADVENTURE"),
+                          text,
+                          NA)) %>%
+    fill(story) %>%
+    filter(story != "THE ADVENTURES OF SHERLOCK HOLMES") %>%
+    mutate(story = factor(story, levels = unique(story)))
+
+sherlock
+```
+```{r}
+library(tidytext)
+tidy_sherlock <- sherlock %>%
+    mutate(line = row_number()) %>%
+    unnest_tokens(word, text) %>%
+    anti_join(stop_words) %>%
+    filter(word != "holmes")
+
+tidy_sherlock %>%
+    count(word, sort = TRUE)
+```
+
