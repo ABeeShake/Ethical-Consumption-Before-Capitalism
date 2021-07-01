@@ -1,0 +1,174 @@
+---
+title: "topicmodelingsparkmess"
+author: "shuba"
+date: "7/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(tidytext)
+library(readtext)
+library(x13binary)
+library(x12)
+library(quanteda)
+
+library(sparklyr)
+spark_install(version = "3.0.0")
+devtools::install_github("rstudio/sparklyr")
+
+```
+
+```{r}
+# text1 <- read.csv(file = 'A50002.P4.csv')
+# 
+# tidytxt1 <- text1 %>%
+#     select(text)%>%
+#     unnest_tokens(word, text) %>%
+#     anti_join(stop_words) %>%
+#     count(word, sort = TRUE)
+```
+
+```{r}
+sc <- spark_connect(master = "local")
+# raw_data1 <- read.csv(file = 'B2_P4.csv')
+raw_data <- spark_read_csv(sc, name = "B2_P4", path = "/Users/shubaprasadh/Downloads/B2_P4.csv")
+
+# raw_data <- rbind(raw_data, read.csv(file = 'A50004.P4.csv'))
+# raw_data <- rbind(raw_data, read.csv(file = 'A50007.P4.csv'))
+# raw_data <- rbind(raw_data, read.csv(file = 'A50025.P4.csv'))
+```
+
+```{r}
+wordsonly <- raw_data %>%
+  select(title, text) 
+
+wordsonly <- wordsonly %>%
+  ft_tokenizer(input_col = "text", 
+               output_col = "extraword")
+wordsonly <- wordsonly %>%
+  ft_stop_words_remover(input_col = "extraword",output_col = "word")
+
+
+# wordsonly <- wordsonly %>%
+#   unnest_tokens(word, text) %>%
+#   anti_join(stop_words)
+
+# wordsonly %>%
+#   count(word, sort = TRUE)
+
+```
+
+```{r}
+model <- ml_lda(
+  wordsonly,
+  formula = NULL,
+  k = 10,
+  max_iter = 20,
+  doc_concentration = NULL,
+  topic_concentration = NULL,
+  subsampling_rate = 0.05,
+  optimizer = "online",
+  checkpoint_interval = 10,
+  keep_last_checkpoint = TRUE,
+  learning_decay = 0.51,
+  learning_offset = 1024,
+  optimize_doc_concentration = TRUE,
+  seed = NULL,
+  features_col = wordsonly %>% select(word) %>% distinct() %>% count() %>% collect() %>%
+   unlist %>% as.vector,
+  topic_distribution_col = "topicDistribution",
+  uid = random_string("lda_")
+)
+
+ml_describe_topics(model, max_terms_per_topic = 10)
+
+ml_log_likelihood(model, dataset)
+
+ml_log_perplexity(model, dataset)
+
+ml_topics_matrix(model)
+```
+
+
+```{r}
+# words_dtm <- wordsonly %>%
+#   count(title, word) %>%
+#   cast_dtm(title, word, n)
+# 
+# library(topicmodels)
+# 
+# words_lda <- LDA(words_dtm, k = 16, control = list(seed = 1234))
+# words_lda
+# ```
+# 
+# ```{r}
+# text_topics <- tidy(words_lda, matrix = "beta")
+# 
+# top_terms <- text_topics %>%
+#   group_by(topic) %>%
+#   slice_max(beta, n = 5) %>% 
+#   ungroup() %>%
+#   arrange(topic, -beta)
+# 
+# top_terms
+# ```
+# 
+# ```{r}
+# top_terms %>%
+#   mutate(term = reorder_within(term, beta, topic)) %>%
+#   ggplot(aes(beta, term, fill = factor(topic))) +
+#   geom_col(show.legend = FALSE) +
+#   facet_wrap(~ topic, scales = "free") +
+#   scale_y_reordered()
+```
+
+
+# ```{r}
+# library(quanteda)
+# library(stm)
+# 
+# ethics_dfm <- wordsonly %>%
+#   count(title, word, sort = TRUE) %>%
+#   cast_dfm(title, word,n)
+# 
+# topic_model <- stm(ethics_dfm, K=5,verbose=FALSE, init.type = "Spectral")
+# ```
+# 
+# ```{r}
+# library(reshape2)
+# td_beta <- tidy(topic_model)
+# td_beta %>%
+#     group_by(topic) %>%
+#     top_n(10, beta) %>%
+#     ungroup() %>%
+#     mutate(topic = paste0("Topic ", topic),
+#            term = reorder_within(term, beta, topic)) %>%
+#     ggplot(aes(term, beta, fill = as.factor(topic))) +
+#     geom_col(alpha = 0.8, show.legend = FALSE) +
+#     facet_wrap(~ topic, scales = "free_y") +
+#     coord_flip() +
+#     scale_x_reordered() +
+#     labs(x = NULL, y = expression(beta),
+#          title = "Highest word probabilities for each topic",
+#          subtitle = "Different words are associated with different topics")
+
+```
+```{r}
+# td_beta %>%
+#     group_by(topic) %>%
+#     top_n(10, beta) %>%
+#     ungroup() %>%
+#     arrange(topic, -beta)
+# td_beta <- td_beta %>%
+#   mutate(term = reorder(term, beta))%>%
+#   ggplot(aes(term,beta,fill = factor(topic)))+
+#   geom_col(show.legend = FALSE)+
+#   facet_wrap(~ topic, scales = "free")+
+#   coord_flip()
+```
