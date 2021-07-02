@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -17,30 +18,40 @@ library(readtext)
 library(x13binary)
 library(x12)
 library(quanteda)
-#library(stylo)
+
+library(sparklyr)
 ```
 
 ```{r}
-text1 <- read.csv(file = 'A50002.P4.csv')
-# text2 <- read.csv(file = 'A50004.P4.csv')
-# text3 <- read.csv(file = 'A50007.P4.csv')
-
-tidytxt1 <- text1 %>%
-    select(text)%>%
-    unnest_tokens(word, text) %>%
-    anti_join(stop_words) %>%
-    count(word, sort = TRUE)
-```
-
-```{r}
-raw_data <- read.csv(file = 'A50002.P4.csv')
-raw_data <- rbind(raw_data, read.csv(file = 'A50004.P4.csv'))
-raw_data <- rbind(raw_data, read.csv(file = 'A50007.P4.csv'))
-raw_data <- rbind(raw_data, read.csv(file = 'A50025.P4.csv'))
+# text1 <- read.csv(file = 'A50002.P4.csv')
+# 
+# tidytxt1 <- text1 %>%
+#     select(text)%>%
+#     unnest_tokens(word, text) %>%
+#     anti_join(stop_words) %>%
+#     count(word, sort = TRUE)
 ```
 
 ```{r}
 
+library(plyr)
+
+setwd("~/Downloads")
+mydir = "ethics_csv"
+myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
+raw_data = ldply(myfiles, read_csv)
+
+# raw_data <- read.csv(file = 'A50002.P4.csv')
+# raw_data <- rbind(raw_data, read.csv(file = 'A50004.P4.csv'))
+
+```
+
+```{r}
+rm(A50002_P4, all_data, all_text, ethics_sparse, raw_data1, raw_data2, raw_data3, sc, wordsonly2, wordsonly3)
+```
+
+
+```{r}
 wordsonly <- raw_data %>%
   select(title, text) 
 
@@ -63,17 +74,19 @@ library(topicmodels)
 words_lda <- LDA(words_dtm, k = 16, control = list(seed = 1234))
 words_lda
 ```
+
 ```{r}
 text_topics <- tidy(words_lda, matrix = "beta")
 
 top_terms <- text_topics %>%
   group_by(topic) %>%
-  slice_max(beta, n = 5) %>% 
+  slice_max(beta, n = 5) %>%
   ungroup() %>%
   arrange(topic, -beta)
 
 top_terms
 ```
+
 ```{r}
 top_terms %>%
   mutate(term = reorder_within(term, beta, topic)) %>%
