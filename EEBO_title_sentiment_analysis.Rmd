@@ -1,0 +1,129 @@
+---
+title: "EEBO Sentiment Analysis"
+author: "Abhishek"
+date: "6/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd('C:/Users/abhis/PycharmProjects/BERT_Code')
+
+require(boxr)
+require(tidyverse)
+require(tidytext)
+require(textdata)
+```
+
+```{r}
+
+#data <- read.csv("./B2_P4.csv")
+
+client_info <- read.table("./app.cfg",
+                          sep = "\n", 
+                          header = FALSE, 
+                          row.names = c("client_id","client_secret"),
+                          col.names = c("tokens"))
+
+```
+
+
+```{r}
+
+box_auth(client_id = client_info["client_id",],
+         client_secret = client_info["client_secret",],
+         )
+
+```
+
+
+```{r}
+
+data <- box_search("B2_P4.csv") %>%
+  box_read()
+```
+
+```{r}
+
+if (!(is.integer(data$date[1]))) {
+  
+  data$date <- data$date %>%
+  substring(3,6) %>%
+  as.integer()
+  
+}
+
+```
+
+
+```{r}
+
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+tidy_titles <- data %>%
+  group_by(date) %>%
+  mutate(
+    linenumber = row_number()
+    ) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+  
+```
+
+
+```{r}
+
+title_sentiments <- tidy_titles %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(title, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = (positive - negative)/(positive + negative))
+
+title_sentiments$normalized_sentiments <- title_sentiments$sentiment %>%
+  scale()
+
+```
+
+
+```{r}
+
+data <- data %>% inner_join(title_sentiments, by = c('title'))
+
+data$index.y <- NULL
+
+```
+
+```{r}
+
+sentiment_by_decade <- data %>%
+  mutate(decade = (date %/% 10)*10) %>%
+  group_by(decade) %>%
+  summarise_all(mean) %>%
+  select(-date)
+
+sentiment_by_decade[,c("title","author","publisher","index","text")] <- list(NULL)
+
+```
+
+
+```{r}
+
+ggplot(data = sentiment_by_decade,
+       mapping = aes(x = factor(decade), y = normalized_sentiments)) +
+  geom_col(aes(fill = normalized_sentiments)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  labs(title = "Average Sentiment of Titles by Decade") + 
+  ylab("Normalized Sentiment") +
+  xlab("Decade")
+```
+
+
+```{r}
+
+mean(sentiment_by_decade$normalized_sentiments)
+
+
+```
