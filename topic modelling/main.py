@@ -1,22 +1,39 @@
 import subprocess
 import os
 import re
+import pandas as pd
+import csv
 import string
 from boxsdk import DevelopmentClient
 
           # This area runs the R script on all files in a folder; here
           # the folder is ethics_csv in my case
-# for filename in os.listdir("/Users/shubaprasadh/Downloads/ethics_csv"):
-#     if filename.endswith(".csv"):
-#         file1 = filename;
-#         print(file1)
-#         subprocess.call(['Rscript',
-#                          '/Users/shubaprasadh/Downloads/topicmodeling1.R',
-#                          file1])
-#     else:
-#         continue
+dir1 = "/Users/shubaprasadh/Downloads/ethics_csv"
+og_file = 'A8_P4.csv'
 
-#               automatically enters the dveloper token
+#               SPLITTING large CSV file into smaller ones
+
+data = pd.read_csv(dir1+"/"+og_file)
+k = 10      #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
+for i in range(k):
+    df = data[i:(i+1)]
+
+    curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
+    fullname = dir1+'/'+curr_file_name
+
+    df.to_csv(fullname, index=False)
+
+#           CALLS R SCRIPT
+
+for filename in os.listdir(dir1):
+    if (filename.endswith(".csv")) & (filename!=og_file):
+        subprocess.call(['Rscript',
+                         '/Users/shubaprasadh/Downloads/topicmodeling1.R',
+                         filename])
+    else:
+        continue
+
+#               automatically enters the developer token
 def run(csv_file1):
     import sys
     f1 = sys.stdin
