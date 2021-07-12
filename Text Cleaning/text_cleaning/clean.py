@@ -107,8 +107,8 @@ def clean_text(txt):
     return temp
 
 
-def find_body(soup):
-    bodies = soup.find_all('div1')
+def find_body(soup,body_tag):
+    bodies = soup.find_all(body_tag)
     body = ''
     for i in bodies:
         body += i.get_text()
@@ -161,13 +161,13 @@ def find_date(soup):
     if len(date1) == 0:
         date1 = 'Date Not Found'
     else:
-        date1 = min(date1)
+        date1 = int(min(date1))
 
-    return [date1]
+    return date1
 
 
 # extract information from file
-def parse_xml(soup):
+def parse_xml(soup,body_tag):
     '''infile = open(file1, "r")
     contents = infile.read()
     soup = BeautifulSoup(contents, 'xml')'''
@@ -176,7 +176,7 @@ def parse_xml(soup):
     author = find_author(soup)
     publisher = find_publisher(soup)
     date = find_date(soup)
-    body = find_body(soup)
+    body = find_body(soup,body_tag)
 
     return title, author, publisher, date, body
 
