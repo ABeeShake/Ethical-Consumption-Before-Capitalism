@@ -21,17 +21,22 @@ for i in range(k):
     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
     fullname = dir1+'/'+curr_file_name
 
-    df.to_csv(fullname, index=False)
+    date1 = df.iloc[0].date
+    #print(fullname + " " + date1)
+
+    if (int(date1)<=1660 & int(date1)>=1500):       # only if within the date range, convert to csv and add to folder
+        df.to_csv(fullname, index=False)
+        #print(fullname)
 
 #           CALLS R SCRIPT
 
-for filename in os.listdir(dir1):
-    if (filename.endswith(".csv")) & (filename!=og_file):
-        subprocess.call(['Rscript',
-                         '/Users/shubaprasadh/Downloads/topicmodeling1.R',
-                         filename])
-    else:
-        continue
+# for filename in os.listdir(dir1):
+#     if (filename.endswith(".csv")) & (filename!=og_file):
+#         subprocess.call(['Rscript',
+#                          '/Users/shubaprasadh/Downloads/topicmodeling1.R',
+#                          filename])
+#     else:
+#         continue
 
 #               automatically enters the developer token
 def run(csv_file1):
@@ -72,19 +77,19 @@ def box_upload(csv_file):
 
 
 #           This checks whether file is relevant against a lexicon
-for filename in os.listdir("/Users/shubaprasadh/Downloads/ethics_csv"):
-    if (filename.endswith(".txt")) & (filename!=".txt"):
-        with open('/Users/shubaprasadh/Downloads/ethics_csv/'+filename,'r') as file:
-            data=file.read().replace(','," ")
-
-        lexicon = re.compile('god|church|saint|lord')
-        filename_csv = (filename.rsplit('.', 1)[0])+('.csv')
-        if(re.search(lexicon, data)!=None):
-            print(filename_csv + ' Success')        #file is relevant
-            run("/Users/shubaprasadh/Downloads/ethics_csv/"+filename_csv)
-        else:
-            print(filename_csv + ' Failure')        #file is not relevant
-    else:
-        continue
+# for filename in os.listdir("/Users/shubaprasadh/Downloads/ethics_csv"):
+#     if (filename.endswith(".txt")) & (filename!=".txt"):
+#         with open('/Users/shubaprasadh/Downloads/ethics_csv/'+filename,'r') as file:
+#             data=file.read().replace(','," ")
+#
+#         lexicon = re.compile('god|church|saint|lord')
+#         filename_csv = (filename.rsplit('.', 1)[0])+('.csv')
+#         if(re.search(lexicon, data)!=None):
+#             print(filename_csv + ' Success')        #file is relevant
+#             run("/Users/shubaprasadh/Downloads/ethics_csv/"+filename_csv)
+#         else:
+#             print(filename_csv + ' Failure')        #file is not relevant
+#     else:
+#         continue
 
 
