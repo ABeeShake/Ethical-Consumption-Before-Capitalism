@@ -1,4 +1,4 @@
-# Setting up Folders for Text Cleaning
+# Setting Up for Text Cleaning
 1. Download the folders you wish to clean from the eebo Box
 2. Drag them to the directory you plan on using
 3. Unzip the folders and rename them so that they have the right P tag at the end
@@ -11,7 +11,7 @@
     * If VARD crashes, place all of the csvs that have already been normalized in this folder before running the script again
   * uncleaned
     * the main.py script will remove all csvs over 1000kb and place them in this folder
-
+6. In the directory containing your main.py python script, create an `app.cfg` file containing your developer token 
 # Useful Tips for Text Cleaning
 1. The shortcut for renaming a folder on windows is `f2`
 2. The shortcut for moving from a folder to its parent directory on windows is `Alt + up arrow`
