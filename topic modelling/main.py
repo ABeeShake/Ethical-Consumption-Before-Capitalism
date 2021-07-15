@@ -14,19 +14,21 @@ og_file = 'A8_P4.csv'
 #               SPLITTING large CSV file into smaller ones
 
 data = pd.read_csv(dir1+"/"+og_file)
-k = 10      #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
-for i in range(k):
-    df = data[i:(i+1)]
 
+for i, row in data.iterrows():
+    df = row
+    if (i==10):
+        break
     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
     fullname = dir1+'/'+curr_file_name
 
-    date1 = df.iloc[0].date
-    #print(fullname + " " + date1)
+    #date1 = df.iloc[0].date
+    date1 = df.date
 
-    if (int(date1)<=1660 & int(date1)>=1500):       # only if within the date range, convert to csv and add to folder
+    #print(fullname + " " + date1)
+    if (int(date1) in range(1500,1661)):        # only if within the date range, convert to csv and add to folder
         df.to_csv(fullname, index=False)
-        #print(fullname)
+        print(fullname)
 
 #           CALLS R SCRIPT
 
@@ -78,7 +80,7 @@ def box_upload(csv_file):
 
 #           This checks whether file is relevant against a lexicon
 # for filename in os.listdir("/Users/shubaprasadh/Downloads/ethics_csv"):
-#     if (filename.endswith(".txt")) & (filename!=".txt"):
+#     if (filename.endswith(".txt")) and (filename!=".txt"):
 #         with open('/Users/shubaprasadh/Downloads/ethics_csv/'+filename,'r') as file:
 #             data=file.read().replace(','," ")
 #
@@ -91,5 +93,13 @@ def box_upload(csv_file):
 #             print(filename_csv + ' Failure')        #file is not relevant
 #     else:
 #         continue
+
+# def sent_analysis_lda(txt_file, csv_file1):
+#     words = open(txt_file).read().split()
+#     data = pd.read_csv(dir1 + "/" + og_file)
+#     for word in words:
+#         re.findall(r'([^.]*word[^.]*)', txt)
+
+
 
 
