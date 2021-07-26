@@ -14,49 +14,51 @@ import string
 from boxsdk import DevelopmentClient
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-          # This area runs the R script on all files in a folder; here
-          # the folder is ethics_csv in my case
-dir = "C:/Users/slp70/Downloads/"
+# This area runs the R script on all files in a folder; here
+# the folder is ethics_csv in my case
+dir = "/home/testuser/Downloads/"
 dir1 = dir + "ethics_csv"
-og_file = 'A8_P4_phase1.csv'
+og_file = 'A8_P4.csv'
 
 #               SPLITTING large CSV file into smaller ones
 
-data = pd.read_csv(dir1+"/"+og_file)
+data = pd.read_csv(dir1 + "/" + og_file)
 
+k = 10     #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
+for i in range(k):
+    print("hi")
+    df = data[i:(i+1)]
 
-# k = 10     #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
-# for i in range(k):
-#     df = data[i:(i+1)]
+    curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
+    fullname = dir1+'/'+curr_file_name
 
-#     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
-#     fullname = dir1+'/'+curr_file_name
+    date1 = df.iloc[0].date
 
-#     date1 = df.iloc[0].date
-
-#     #print(fullname + " " + date1)
-#     if (int(date1) in range(1500,1661)):        # only if within the date range, convert to csv and add to folder
-#         df.to_csv(fullname, index=False)
+    #print(fullname + " " + date1)
+    if (int(date1) in range(1580,1630)):        # only if within the date range, convert to csv and add to folder
+        df.to_csv(fullname, index=False)
 
 #           CALLS R SCRIPT
 
 for filename in os.listdir(dir1):
-    if (filename.endswith(".csv")) & (filename!=og_file):
-        subprocess.call(['C:/Program Files/R/R-4.1.0/bin/Rscript',
-                          "C:/Users/slp70/Downloads/topicmodeling1.R",
-                          filename],shell=True, stdout=subprocess.PIPE)
+    if (filename.endswith(".csv")) & (filename != og_file):
+        subprocess.call(['Rscript',
+                         "/home/testuser/Downloads/topicmodeling1.R",
+                         filename], shell=True, stdout=subprocess.PIPE)
     else:
-         continue
+        continue
+
 
 #               automatically enters the developer token
 def run(csv_file1):
     import sys
     f1 = sys.stdin
-    f = open('input.txt','r')       #input.txt is text file that contains the developer key
+    f = open('input.txt', 'r')  # input.txt is text file that contains the developer key
     sys.stdin = f
     box_upload(csv_file1)
     f.close()
     sys.stdin = f1
+
 
 #               uploads to Box
 def box_upload(csv_file):
@@ -84,69 +86,73 @@ def box_upload(csv_file):
 
     print(f'File {new_file.name} was uploaded to {folder.name}')
 
+
 def wordsearch(keyword, n, text):
     words = text.split()
     fullwords = ""
-    #iterate through all the words
+    # iterate through all the words
     for index, word in enumerate(words):
-        #check if search keyword matches
+        # check if search keyword matches
         if word == keyword:
-            #fetch left side words
-            left_side_words1 = words[index-n : index]
-            #fetch right side words
-            right_side_words1 = words[index : index + n + 1] #put index+1 if you want to avoid keyword
+            # fetch left side words
+            left_side_words1 = words[index - n: index]
+            # fetch right side words
+            right_side_words1 = words[index: index + n + 1]  # put index+1 if you want to avoid keyword
             str1 = " "
             left = str1.join(left_side_words1)
             right = str1.join(right_side_words1)
             fullwords = fullwords + left + " " + right + " "
     return fullwords
 
+
 def make_text_window(tm_res, csv_file1, txt_file):
     words = tm_res.split(" ")
     words.pop(0)
     df1 = pd.read_csv(dir1 + '/' + csv_file1)
     pd.set_option('display.max_colwidth', None)
-    alltext = str(df1[['text']])            #getting text column values from csv
-    #print(alltext)
+    alltext = str(df1[['text']])  # getting text column values from csv
+    # print(alltext)
 
     curr_file_name1 = (txt_file.rsplit('.', 1)[0]) + '_' + "lsa" + ('.txt')
-    fullname1 = dir+"topicmodel_sent/" + curr_file_name1
+    fullname1 = dir + "topicmodel_sent/" + curr_file_name1
     outtextfile = open(fullname1, "w")
 
     for i in range(len(words)):
         surrounding = wordsearch(str(words[i]), 5, alltext)
         if (surrounding != None):
             moretext = surrounding
-            #print(moretext)
+
             outtextfile.writelines(moretext)
 
         # This checks whether file is relevant against a lexicon
+
+
 for filename in os.listdir(dir1):
-    if (filename.endswith(".txt")) and (filename!=".txt"):
-        with open(dir1+'/'+filename,'r') as file:
-            data=file.read().replace(',',"")
-            data = data.replace('"',"")
+    if (filename.endswith(".txt")) and (filename != ".txt"):
+        with open(dir1 + '/' + filename, 'r') as file:
+            data = file.read().replace(',', "")
+            data = data.replace('"', "")
 
         rel_lexicon = re.compile('god|church|saint|lord|soul')
         phil_lexicon = re.compile('opinion')
-        filename_csv = (filename.rsplit('.', 1)[0])+('.csv')
+        filename_csv = (filename.rsplit('.', 1)[0]) + ('.csv')
 
         mainratio = 0
 
-        #make_text_window(data, filename_csv, filename) #MOVE THIS INTO IF STATEMENT and uncomment below stuff
+        # make_text_window(data, filename_csv, filename) #MOVE THIS INTO IF STATEMENT and uncomment below stuff
 
-        if((re.search(rel_lexicon, data)!=None)and(re.search(phil_lexicon, data)!=None)):
-            rel_ratio = len(re.findall(rel_lexicon, data))/20.0
-            phil_ratio = len(re.findall(phil_lexicon, data))/20.0
-            mainratio = phil_ratio/rel_ratio
+        if ((re.search(rel_lexicon, data) != None) and (re.search(phil_lexicon, data) != None)):
+            rel_ratio = len(re.findall(rel_lexicon, data)) / 20.0
+            phil_ratio = len(re.findall(phil_lexicon, data)) / 20.0
+            mainratio = phil_ratio / rel_ratio
 
-            df = pd.read_csv(dir1+"/"+filename_csv)
+            df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
-            df.to_csv(dir1+"/"+filename_csv, index=False)
+            df.to_csv(dir1 + "/" + filename_csv, index=False)
             make_text_window(data, filename_csv, filename)
 
-            run(dir1+"/"+filename_csv)          #uploading to box if relevant
-        elif(re.search(rel_lexicon, data)!=None):
+            run(dir1 + "/" + filename_csv)  # uploading to box if relevant
+        elif (re.search(rel_lexicon, data) != None):
             mainratio = 0
 
             df = pd.read_csv(dir1 + "/" + filename_csv)
@@ -154,24 +160,24 @@ for filename in os.listdir(dir1):
             df.to_csv(dir1 + "/" + filename_csv, index=False)
             make_text_window(data, filename_csv, filename)
 
-            run(dir1+"/"+filename_csv)          #uploading to box if relevant
-        elif(re.search(phil_lexicon, data)!=None):
+            run(dir1 + "/" + filename_csv)  # uploading to box if relevant
+        elif (re.search(phil_lexicon, data) != None):
             mainratio = np.inf
 
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
             make_text_window(data, filename_csv, filename)
-            
-            run(dir1+"/"+filename_csv)          #uploading to box if relevant
+
+            run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         else:
             continue
     else:
         continue
 
+
 # THIS METHOD analyzes sentiment using vader
 def sentiment_scores(sentence):
-
     # Create a SentimentIntensityAnalyzer object.
     sid_obj = SentimentIntensityAnalyzer()
 
