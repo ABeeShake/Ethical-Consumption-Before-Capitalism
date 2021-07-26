@@ -25,27 +25,26 @@ og_file = 'A8_P4_phase1.csv'
 data = pd.read_csv(dir1+"/"+og_file)
 
 
-k = 10     #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
-for i in range(k):
-    df = data[i:(i+1)]
+# k = 10     #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
+# for i in range(k):
+#     df = data[i:(i+1)]
 
-    curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
-    fullname = dir1+'/'+curr_file_name
+#     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
+#     fullname = dir1+'/'+curr_file_name
 
-    date1 = df.iloc[0].date
+#     date1 = df.iloc[0].date
 
-    #print(fullname + " " + date1)
-    if (int(date1) in range(1500,1661)):        # only if within the date range, convert to csv and add to folder
-        df.to_csv(fullname, index=False)
-        #print(fullname)
+#     #print(fullname + " " + date1)
+#     if (int(date1) in range(1500,1661)):        # only if within the date range, convert to csv and add to folder
+#         df.to_csv(fullname, index=False)
 
 #           CALLS R SCRIPT
 
 for filename in os.listdir(dir1):
     if (filename.endswith(".csv")) & (filename!=og_file):
-        subprocess.call(['Rscript',
-                          r'C:\Users\slp70\Downloads\topicmodeling1.R',
-                          filename])
+        subprocess.call(['C:/Program Files/R/R-4.1.0/bin/Rscript',
+                          "C:/Users/slp70/Downloads/topicmodeling1.R",
+                          filename],shell=True, stdout=subprocess.PIPE)
     else:
          continue
 
