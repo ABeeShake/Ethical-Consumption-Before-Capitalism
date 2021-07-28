@@ -18,29 +18,37 @@ from boxsdk import DevelopmentClient
 dir = "/Users/shubaprasadh/Downloads/"
 dir1 = dir + "ethics_csv"
 backup_dir = dir+"proj_backup"
+all_dir = dir+"all_clean_files"
 
 consumption_filepath = dir + "topicmodel_sent/"
 
-def main_prog(bigfile):
+def main_prog(big_filename):
     #               SPLITTING large CSV file into smaller ones
-    og_file = bigfile
-    # data = pd.read_csv(dir1 + "/" + og_file)
-    # rows = data.index
-    # k = len(rows)
-    #
-    # print(k)        #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
-    # for i in range(k):
-    #     df = data[i:(i+1)]
-    #
-    #     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
-    #     fullname = dir1+'/'+curr_file_name
-    #
-    #     date1 = df.iloc[0].date
-    #
-    #     #print(fullname + " " + date1)
-    #     if (date1!='Date Not Found'):
-    #         if (int(date1) in range(1580,1630)):        # only if within the date range, convert to csv and add to folder
-    #             df.to_csv(fullname, index=False)
+    og_file = big_filename
+    data = pd.read_csv(all_dir + "/" + og_file)
+    rows = data.index
+    k = len(rows)
+
+    print(k)        #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
+    for i in range(k):
+        df = data[i:(i+1)]
+
+        curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
+        fullname = dir1+'/'+curr_file_name
+
+        date1 = df.iloc[0].date
+
+        #print(fullname + " " + date1)
+        if (date1!='Date Not Found'):
+            if (date1.isdigit()):
+                if (int(date1) in range(1580,1630)):        # only if within the date range, convert to csv and add to folder
+                    df.to_csv(fullname, index=False)
+            else:
+                datestr = date1
+                if (datestr and datestr.strip()):
+                    datenum = re.search('\d{4}', datestr)
+                    if (int(str(datenum.group(0))) in range(1580, 1630)):  # only if within the date range, convert to csv and add to folder
+                        df.to_csv(fullname, index=False)
 
     #           CALLS R SCRIPT
 
@@ -118,7 +126,7 @@ def main_prog(bigfile):
             # Add contents of list as last row in the csv file
             csv_writer.writerow(list_of_elem)
 
-    consumptionList = ["gold","god","sugarcane","tobacco","silver"]
+    consumptionList = ["gold","chocolate","wool", "beer", "tobacco","silver"]
     def make_text_window(ratio, csv_file1):
         df1 = pd.read_csv(dir1 + '/' + csv_file1)
         pd.set_option('display.max_colwidth', None)
@@ -159,7 +167,7 @@ def main_prog(bigfile):
                 df = pd.read_csv(dir1 + "/" + filename_csv)
                 df["ratio"] = mainratio
                 df.to_csv(dir1 + "/" + filename_csv, index=False)
-                #make_text_window(mainratio, filename_csv)
+                make_text_window(mainratio, filename_csv)
 
                 run(dir1 + "/" + filename_csv)  # uploading to box if relevant
             elif (re.search(rel_lexicon, data) != None):
@@ -168,7 +176,7 @@ def main_prog(bigfile):
                 df = pd.read_csv(dir1 + "/" + filename_csv)
                 df["ratio"] = mainratio
                 df.to_csv(dir1 + "/" + filename_csv, index=False)
-                #make_text_window(mainratio, filename_csv)
+                make_text_window(mainratio, filename_csv)
 
                 run(dir1 + "/" + filename_csv)  # uploading to box if relevant
             elif (re.search(phil_lexicon, data) != None):
@@ -177,7 +185,7 @@ def main_prog(bigfile):
                 df = pd.read_csv(dir1 + "/" + filename_csv)
                 df["ratio"] = mainratio
                 df.to_csv(dir1 + "/" + filename_csv, index=False)
-                #make_text_window(mainratio, filename_csv)
+                make_text_window(mainratio, filename_csv)
 
                 run(dir1 + "/" + filename_csv)  # uploading to box if relevant
             else:
@@ -187,9 +195,11 @@ def main_prog(bigfile):
 
                     #CLEANING UP ethics_csv for next one
     for filename in os.listdir(dir1):
-        shutil.move(dir1+"/"+filename, backup_dir)
+        if (not filename.startswith('.') and (filename.endswith(".csv") or filename.endswith(".txt"))):
+            shutil.move(dir1+"/"+filename, backup_dir)
 
-for file1 in os.listdir(dir1):
+for file1 in os.listdir(all_dir):
     if (file1.endswith(".csv")):
         filenamestr = ""+file1
         main_prog(filenamestr)
+
