@@ -4,7 +4,7 @@ Created on Sun Jul 25 16:10:28 2021
 @author: slp70
 """
 import subprocess
-import os
+import shutil, os
 import re
 import pandas as pd
 from csv import writer
@@ -18,12 +18,9 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 dir = "/Users/shubaprasadh/Downloads/"
 dir1 = dir + "ethics_csv"
 og_file = 'A8_P4.csv'
+backup_dir = dir+"proj_backup"
 
 consumption_filepath = dir + "topicmodel_sent/"
-# beer_file = dir+ "topicmodel_sent/beer_file.csv"
-# sugarcane_file = dir+ "topicmodel_sent/sugarcane_file.csv"
-# tobacco_file = dir +"topicmodel_sent/tobacco_file.csv"
-# silver_file = dir+ "topicmodel_sent/silver_file.csv"
 
 #               SPLITTING large CSV file into smaller ones
 
@@ -136,22 +133,6 @@ def make_text_window(ratio, csv_file1):
             pairList.append(moretext)
             print(csv_file1 + moretext)
             append_list_as_row(consumption_filepath+word+"_file.csv", pairList)
-
-            # if (word=="gold"):
-            #     print(csv_file1 + moretext)
-            #     append_list_as_row(gold_file,pairList)
-            # elif (word=="god"):
-            #     print(csv_file1 + moretext)
-            #     append_list_as_row(beer_file,pairList)
-            # elif (word=="sugarcane"):
-            #     print(csv_file1 + moretext)
-            #     append_list_as_row(sugarcane_file,pairList)
-            # elif (word=="tobacco"):
-            #     print(csv_file1 + moretext)
-            #     append_list_as_row(tobacco_file,pairList)
-            # elif (word=="silver"):
-            #     print(csv_file1 + moretext)
-            #     append_list_as_row(silver_file,pairList)
         else:
             continue
 
@@ -178,7 +159,7 @@ for filename in os.listdir(dir1):
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
-            make_text_window(mainratio, filename_csv)
+            #make_text_window(mainratio, filename_csv)
 
             #run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         elif (re.search(rel_lexicon, data) != None):
@@ -187,7 +168,7 @@ for filename in os.listdir(dir1):
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
-            make_text_window(mainratio, filename_csv)
+            #make_text_window(mainratio, filename_csv)
 
             #run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         elif (re.search(phil_lexicon, data) != None):
@@ -196,13 +177,19 @@ for filename in os.listdir(dir1):
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
-            make_text_window(mainratio, filename_csv)
+            #make_text_window(mainratio, filename_csv)
 
             #run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         else:
             continue
     else:
         continue
+
+                #CLEANING UP ethics_csv for next one
+for filename in os.listdir(dir1):
+    #print(filename)
+    shutil.move(dir1+"/"+filename, backup_dir)
+
 
 
 # THIS METHOD analyzes sentiment using vader
