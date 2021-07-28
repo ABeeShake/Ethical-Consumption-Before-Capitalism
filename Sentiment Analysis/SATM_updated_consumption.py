@@ -42,6 +42,12 @@ for i in range(k):
         if (date1.isdigit()):
             if (int(date1) in range(1580,1630)):        # only if within the date range, convert to csv and add to folder
                 df.to_csv(fullname, index=False)
+        else:
+            datestr = date1
+            if (datestr and datestr.strip()):
+                datenum = re.search('\d{4}', datestr)
+                if (int(str(datenum.group(0))) in range(1580, 1630)):  # only if within the date range, convert to csv and add to folder
+                    df.to_csv(fullname, index=False)
 
 #           CALLS R SCRIPT
 
