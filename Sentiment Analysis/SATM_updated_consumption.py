@@ -11,46 +11,47 @@ from csv import writer
 import numpy as np
 import string
 from boxsdk import DevelopmentClient
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # This area runs the R script on all files in a folder; here
 # the folder is ethics_csv in my case
+
 dir = "/Users/shubaprasadh/Downloads/"
 dir1 = dir + "ethics_csv"
-og_file = 'A8_P4.csv'
 backup_dir = dir+"proj_backup"
 
 consumption_filepath = dir + "topicmodel_sent/"
 
-#               SPLITTING large CSV file into smaller ones
 
+#               SPLITTING large CSV file into smaller ones
+og_file = 'A8_P4.csv'
 data = pd.read_csv(dir1 + "/" + og_file)
 rows = data.index
 k = len(rows)
 
-# print(k)        #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
-# for i in range(k):
-#     df = data[i:(i+1)]
-#
-#     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
-#     fullname = dir1+'/'+curr_file_name
-#
-#     date1 = df.iloc[0].date
-#
-#     #print(fullname + " " + date1)
-#     if (date1!='Date Not Found'):
-#         if (int(date1) in range(1580,1630)):        # only if within the date range, convert to csv and add to folder
-#             df.to_csv(fullname, index=False)
-#
-# #           CALLS R SCRIPT
-#
-# for filename in os.listdir(dir1):
-#     if (filename.endswith(".csv")) & (filename != og_file):
-#         subprocess.call(['Rscript',
-#                          "/Users/shubaprasadh/Downloads/topicmodeling1.R",
-#                          filename])
-#     else:
-#         continue
+print(k)        #of csv files         10 is PLACEHOLDER, REPLACE WITH NUMBER OF ROWS IN DATAFRAME
+for i in range(k):
+    df = data[i:(i+1)]
+
+    curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
+    fullname = dir1+'/'+curr_file_name
+
+    date1 = df.iloc[0].date
+
+    #print(fullname + " " + date1)
+    if (date1!='Date Not Found'):
+        if (date1.isdigit()):
+            if (int(date1) in range(1580,1630)):        # only if within the date range, convert to csv and add to folder
+                df.to_csv(fullname, index=False)
+
+#           CALLS R SCRIPT
+
+for filename in os.listdir(dir1):
+    if (filename.endswith(".csv")) & (filename != og_file):
+        subprocess.call(['Rscript',
+                         "/Users/shubaprasadh/Downloads/topicmodeling1.R",
+                         filename])
+    else:
+        continue
 
 
 #               automatically enters the developer token
@@ -118,7 +119,7 @@ def append_list_as_row(file_name, list_of_elem):
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
 
-consumptionList = ["gold","god","sugarcane","tobacco","silver"]
+consumptionList = ["gold","chocolate","wool", "beer", "tobacco","silver"]
 def make_text_window(ratio, csv_file1):
     df1 = pd.read_csv(dir1 + '/' + csv_file1)
     pd.set_option('display.max_colwidth', None)
@@ -159,27 +160,27 @@ for filename in os.listdir(dir1):
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
-            #make_text_window(mainratio, filename_csv)
+            make_text_window(mainratio, filename_csv)
 
-            #run(dir1 + "/" + filename_csv)  # uploading to box if relevant
+            run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         elif (re.search(rel_lexicon, data) != None):
             mainratio = 0
 
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
-            #make_text_window(mainratio, filename_csv)
+            make_text_window(mainratio, filename_csv)
 
-            #run(dir1 + "/" + filename_csv)  # uploading to box if relevant
+            run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         elif (re.search(phil_lexicon, data) != None):
             mainratio = 10000
 
             df = pd.read_csv(dir1 + "/" + filename_csv)
             df["ratio"] = mainratio
             df.to_csv(dir1 + "/" + filename_csv, index=False)
-            #make_text_window(mainratio, filename_csv)
+            make_text_window(mainratio, filename_csv)
 
-            #run(dir1 + "/" + filename_csv)  # uploading to box if relevant
+            run(dir1 + "/" + filename_csv)  # uploading to box if relevant
         else:
             continue
     else:
@@ -187,41 +188,5 @@ for filename in os.listdir(dir1):
 
                 #CLEANING UP ethics_csv for next one
 for filename in os.listdir(dir1):
-    #print(filename)
-    shutil.move(dir1+"/"+filename, backup_dir)
-
-
-
-# THIS METHOD analyzes sentiment using vader
-def sentiment_scores(sentence):
-    # Create a SentimentIntensityAnalyzer object.
-    sid_obj = SentimentIntensityAnalyzer()
-
-    # polarity_scores method of SentimentIntensityAnalyzer
-    # object gives a sentiment dictionary.
-    # which contains pos, neg, neu, and compound scores.
-    sentiment_dict = sid_obj.polarity_scores(sentence)
-
-    print("Overall sentiment dictionary is : ", sentiment_dict)
-    print("Text was rated as ", sentiment_dict['neg'] * 100, "% Negative")
-    print("Text was rated as ", sentiment_dict['neu'] * 100, "% Neutral")
-    print("Text was rated as ", sentiment_dict['pos'] * 100, "% Positive")
-
-    print("Text Overall Rated As", end=" ")
-
-    # decide sentiment as positive, negative and neutral
-    if sentiment_dict['compound'] >= 0.05:
-        print("Positive")
-
-    elif sentiment_dict['compound'] <= - 0.05:
-        print("Negative")
-
-    else:
-        print("Neutral")
-
-#           DOING SENTIMENT ANALYSIS
-# for textfile in os.listdir(dir+"topicmodel_sent"):
-#     if (textfile.endswith(".txt")) and (textfile!=".txt"):
-#         with open(dir+"topicmodel_sent/"+textfile,'r') as file:
-#             data1 = file.read()
-#             sentiment_scores(data1)
+    if (not filename.startswith('.') and (filename.endswith(".csv") or filename.endswith(".txt"))):
+        shutil.move(dir1+"/"+filename, backup_dir)
