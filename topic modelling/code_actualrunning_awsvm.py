@@ -24,7 +24,7 @@ specific_folder_dir = dir+"box_upload"
 
 
 #               SPLITTING large CSV file into smaller ones
-og_file = 'A2_P4.csv'
+og_file = 'A1_1P5_part3.csv'
 data = pd.read_csv(dir1 + "/" + og_file)
 rows = data.index
 k = len(rows)
@@ -36,7 +36,12 @@ for i in range(k):
     curr_file_name = (og_file.rsplit('.', 1)[0]) +'_'+str(i) + ('.csv')
     fullname = dir1+'/'+curr_file_name
 
-    date1 = (df.iloc[0].date)
+    if isinstance(df.iloc[0].date,str):
+        date1 = (df.iloc[0].date)
+    else:
+        date1 = (df.iloc[0].date).astype(str)
+
+    #date1 = (df.iloc[0].date)
     #date1 = (df.iloc[0].date).astype(str)
 
     #print(fullname + " " + date1)
