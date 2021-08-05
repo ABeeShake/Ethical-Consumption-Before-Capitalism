@@ -12,12 +12,29 @@ from sklearn.decomposition import PCA
 import seaborn as sns
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from itertools import combinations
 
 plt.style.use('ggplot')
 
 
 # Functions
 
+
+def load_model(decade):
+
+    model_list = glob(r'C:\Users\abhis\PycharmProjects\Cosine Similarity\embeddings_by_5_year_group/*.model')
+
+    saved_model, = [model for
+                    model in
+                    model_list if
+                    str(decade) in
+                    model]
+
+    w2v = Word2Vec.load(saved_model)
+
+    vectors = w2v.wv
+
+    return vectors
 
 def graph_random_embeddings(decade: int, sample: int = None, dim: int = 2, show_words: bool = False):
     '''
@@ -27,11 +44,7 @@ def graph_random_embeddings(decade: int, sample: int = None, dim: int = 2, show_
             show_words - determine whether or not to label each point
     Outputs: a graph of random word embeddings
     '''
-    saved_model, = [model for model in glob('./embeddings_by_decade/*.model') if str(decade) in model]
-
-    w2v = Word2Vec.load(saved_model)
-
-    vectors = w2v.wv
+    vectors = load_model(decade)
 
     indices = list(vectors.key_to_index.values())
 
@@ -52,7 +65,7 @@ def graph_random_embeddings(decade: int, sample: int = None, dim: int = 2, show_
 
         if show_words:
             for i in range(reduced_vectors.shape[0]):
-                plt.text(x=reduced_vectors[i, 0] + 0.02, y=reduced_vectors[i, 1] + 0.02,
+                plt.text(x=reduced_vectors[i, 0] + 0.01, y=reduced_vectors[i, 1] + 0.01,
                          s=sampled_words[i],
                          fontdict=dict(color='black', size=10),
                          bbox=dict(facecolor='yellow', alpha=0.5))
@@ -71,22 +84,72 @@ def graph_random_embeddings(decade: int, sample: int = None, dim: int = 2, show_
         plt.show()
 
 
-def graph_similarity(word1, word2, model):
-    """
-    computes the cosine similarity between two specified words using a given premade w2v model
-    :param word1:
-    :param word2:
-    :param model:
-    :return:
-    """
-    w2v = Word2Vec.load(model)
-    word1_vec = w2v.wv[word1]
-    word2_vec = w2v.wv[word2]
+def cosine_similarity(pair, vectors):
 
-    sim_score = cosine(word1_vec, word2_vec)
+    '''
+    Word2Vec.wv.similarity(word1,word2)
+    '''
+    word1, word2 = pair
 
-    return sim_score
+    sim = vectors.similarity(word1,word2)
 
+    return sim
+
+
+def generate_heatmap_matrix(lexicon,decade):
+
+    vectors = load_model(decade)
+
+    pairs = list(combinations(lexicon, 2))
+
+    sim_scores = [cosine_similarity(pair, vectors) for pair in pairs]
+
+    sim_df = pd.DataFrame({'pair': pairs, 'similarity': sim_scores})
+
+    sim_df['word1'] = sim_df['pair'].apply(lambda x: lexicon.index(x[0]))
+    sim_df['word2'] = sim_df['pair'].apply(lambda x: lexicon.index(x[1]))
+
+    sim_df['pair'] = list(zip(sim_df.word1, sim_df.word2, sim_df.similarity))
+
+    df_hm = pd.DataFrame({'word1': range(len(lexicon)),
+                          'word2': range(len(lexicon)),
+                          'similarity': pd.Series(np.ones(len(lexicon)))})
+
+    df_hm = df_hm.pivot(index='word1', columns='word2').fillna(0)
+
+    for row, col, similarity in sim_df.pair:
+
+        df_hm.iloc[col,row] = similarity
+
+    return df_hm
+
+
+def plot_heatmap(lexicon, decade):
+
+    df_hm = generate_heatmap_matrix(lexicon,decade)
+
+    mask = np.zeros_like(df_hm)
+    mask[np.triu_indices_from(mask)] = True
+
+    # print(df_hm)
+    sns.set_style('ticks')
+
+    sns.heatmap(df_hm,
+                mask = mask,
+                xticklabels = lexicon,
+                yticklabels = lexicon,
+                annot = True)
+    plt.xlabel('word 1')
+    plt.ylabel('word 2')
+    plt.title(f'Cosine Similarity Between Word-Pairs ({decade})')
+    plt.show()
 
 if __name__ == '__main__':
-    graph_random_embeddings(1600, sample=10, dim=2, show_words=True)
+
+    lexicon = ['christ','god','church', 'king', 'lord', 'ale']
+
+    plot_heatmap(lexicon, 1600)
+
+    '''
+    queen = king - man + woman
+    '''

@@ -47,10 +47,10 @@ def make_dataset(dir):
 ### Create Embeddings ###
 
 
-def embed_by_decade(df, decade):
-    w2v = Word2Vec(sentences=df[df['decade'] == decade]['text'], min_count=1, window=5, workers=6)
+def embed_by_year_group(df, group):
+    w2v = Word2Vec(sentences=df[df['5_year_group'] == group]['text'], min_count=1, window=5, workers=6)
 
-    w2v.save(rf'C:\Users\abhis\PycharmProjects\Cosine Similarity\embeddings_by_decade\{decade}.model')
+    w2v.save(rf'C:\Users\abhis\PycharmProjects\Cosine Similarity\embeddings_by_decade\{group}.model')
 
 
 if __name__ == "__main__":

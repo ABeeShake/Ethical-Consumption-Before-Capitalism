@@ -54,6 +54,16 @@ def date_cleaner(date:str or int):
         return date
 
 
+def make_5year_groups(date:int):
+
+    mod = date % 10
+    decade = (date // 10) * 10
+
+    if mod < 5:
+        return f'{decade} - {decade + 4}'
+    else:
+        return f'{decade + 5} - {decade + 9}'
+
 # Complete Preprocessing:
 
 def preprocess(df):
@@ -63,8 +73,8 @@ def preprocess(df):
     df['date'] = df['date'].swifter.apply(date_cleaner)
     df = df.loc[(df['date'] <= 1660) & (df['date'] >= 1500)]
 
-    print('Creating Decades')
-    df['decade'] = df['date'].swifter.apply(lambda x: 10 * (x // 10))
+    print('Creating 5 Year Groups')
+    df['5_year_group'] = df['date'].swifter.apply(make_5year_groups)
     print('Removing Punctuation')
     df['text'] = df['text'].swifter.apply(punct_remover)
     print('Removing Stopwords')
