@@ -1,0 +1,246 @@
+---
+title: "Cosine_Similarity_Graphs"
+author: "Abhishek"
+date: "7/31/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+setwd('C:/Users/abhis/PycharmProjects/Cosine Similarity')
+
+library(tidyverse)
+library(tidytext)
+library(lsa)
+library(pheatmap)
+library(reticulate)
+library(Rcpp)
+
+gensim <- import('gensim')
+```
+
+
+
+```{r}
+
+
+load_model <- function(group) {
+  
+  model_2_load <- paste('embeddings_by_5_year_group/',
+                        group,
+                        '.model',
+                        sep = '')
+  
+  embeddings <- gensim$models$Word2Vec$load(model_2_load)
+
+  vectors <- embeddings$wv
+  
+  return(vectors)
+  
+}
+
+```
+
+
+
+```{r}
+
+vectors <- load_model("1600 - 1604")
+```
+
+
+
+```{r}
+
+religon_words <- c("gold","christ","money","luxury","greed","wealth","king","pure","vein","heart","star","land",
+                   "holy","eternal","beauty")
+
+df_hm <- matrix(1,length(religon_words),length(religon_words)) %>%
+  as.data.frame(row.names = religon_words)
+
+names(df_hm) <- religon_words
+
+df_hm
+
+```
+
+
+
+```{r}
+
+word_pairs <- crossing(word1 = religon_words, word2 = religon_words)
+
+word_pairs
+
+```
+
+
+```{r}
+
+for (row in 1:nrow(word_pairs)) {
+  
+  word1 <- word_pairs[row, "word1"] %>%
+    as.character()
+  word2 <- word_pairs[row, "word2"] %>%
+    as.character()
+  
+  wv1 <- vectors[word1] %>%
+    as.vector()
+  wv2 <- vectors[word2] %>%
+    as.vector()
+  
+  df_hm[word1, word2] <- cosine(wv1,wv2)
+  
+}
+
+```
+
+
+
+```{r}
+
+pheatmap(df_hm, display_numbers = TRUE)
+
+```
+
+Things to do:
+* graph "use" and "value" over time
+  * determine religious or philosophical
+* graph consumption items over time using religious and philosophical terms
+
+```{r}
+
+
+
+groups <- Sys.glob(paths = 'embeddings_by_5_year_group/*.model',dirmark = FALSE) %>%
+  as.vector() %>%
+  substr(start = 28, stop = 38) %>%
+  sort()
+
+groups
+
+```
+
+
+
+```{r}
+
+average_sim_score <- function(vectors,word, word_list) {
+  
+  sim_score <- 0
+  
+  for (w in word_list) {
+    
+    sim_score <- sim_score + as.numeric(vectors$similarity(word, w))
+    
+  }
+  
+  sim_score <- sim_score / length(word_list)
+  
+  return(sim_score)
+  
+}
+
+sim_over_time <- function(word) {
+  
+  rel_words <- c("christ","holy","heaven","god","faithful")
+  phil_words <- c("community","ethics","habit","aristotle","virtue")
+
+  philosophical_word <- "aristotle"
+  
+  groups <- Sys.glob(paths = 'embeddings_by_5_year_group/*.model',dirmark = FALSE) %>%
+    as.vector() %>%
+    substr(start = 28, stop = 38) %>%
+    sort()
+  
+  sim <- matrix(0,length(groups), 3) %>%
+    as.data.frame()
+  
+  names(sim) <- c("time_period","religious","philosophical")
+  
+  for (i in seq_along(groups)) {
+    
+    vectors <- load_model(groups[[i]])
+    
+    rel_score <- average_sim_score(vectors, word, rel_words)
+    phil_score <- average_sim_score(vectors, word, phil_words)
+      
+    
+    row <- c(groups[[i]],
+             rel_score,
+             phil_score)
+    
+    sim[i,] <- row
+    
+  }
+  
+  sim <- sim %>%
+    transform(religious = as.numeric(religious),
+              philosophical = as.numeric(philosophical))
+  
+  return(sim)
+  
+}
+
+```
+
+
+
+```{r}
+
+plot_line_graph <- function(sim_df, word){
+  
+  sim_df <- sim_df %>%
+    pivot_longer(cols = c("religious","philosophical"),
+                 names_to = "word_type",
+                 values_to = "similarity_scores")
+  
+  plot <- ggplot(sim_df, mapping = aes(x = time_period, 
+                                       y = similarity_scores,
+                                       group = word_type,
+                                       color = word_type)) + 
+    geom_line(size = 1) +
+    theme(axis.text.x = element_text(angle = 90),
+          legend.title = element_blank()) + 
+    labs(title = paste("Relationship Between", tools::toTitleCase(word), "and Religion/Philosophy", sep = " ")) +
+    xlab("Time Period") +
+    scale_y_continuous(name = 'Cosine Similarity')
+  
+  return(plot)
+  
+}
+
+```
+
+
+
+```{r}
+
+#SOT - similarity over time
+
+#gold_SOT <- sim_over_time("gold")
+
+#silver_SOT <- sim_over_time("silver")
+
+#wool_SOT <- sim_over_time("wool")
+
+#beer_SOT <- sim_over_time("beer")
+
+#tobacco_SOT <- sim_over_time("tobacco")
+
+plot_line_graph(gold_SOT,"gold")
+
+plot_line_graph(silver_SOT,"silver")
+
+plot_line_graph(wool_SOT,"wool")
+
+plot_line_graph(beer_SOT,"beer")
+
+plot_line_graph(tobacco_SOT,"tobacco")
+
+plot_line_graph(use_SOT,"use")
+
+```
+
+
+
