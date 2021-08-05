@@ -1,12 +1,18 @@
-from NLP_tools.build_models import make_dataset, embed_by_decade
-from NLP_tools.preprocessing import preprocess
+def main():
 
-df = make_dataset(dir = r'C:\Users\abhis\PycharmProjects\TextCleaning')
+    from NLP_tools.build_models import make_dataset, embed_by_year_group
 
-decades = df.decade.unique()
+    df = make_dataset(dir = r'C:\Users\abhis\Documents\CollegeDocs\Data+\relevant files')
 
-for decade in decades:
+    groups = df['5_year_group'].unique()
 
-    print(f'Creating Embeddings for the {decade}s')
-    embed_by_decade(df,decade)
-    print(f'Finished Embeddings for the {decade}s')
+    for group in groups:
+
+        print(f'Creating Embeddings for the {group}s')
+        embed_by_year_group(df,group)
+        print(f'Finished Embeddings for the {group}s')
+
+
+if __name__ == '__main__':
+
+    main()
